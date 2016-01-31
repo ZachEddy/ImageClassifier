@@ -1,3 +1,3 @@
-from src import initialize_network
-# start program from top level of project
-initialize_network
+# start program from top level of project for import purposes
+from src import net_initialize
+net_initialize
