@@ -1,17 +1,19 @@
+# a class to manage the convolution layer
 import numpy as np
 from src import volume
 
 class conv_layer:
 	def __init__(self, field_size, filter_count, stride, pad):
-		# set params as instance variables
+		# set class variables
 		self.field_size = field_size
 		self.filter_count = filter_count
 		self.stride = stride
 		self.pad = pad
 
-	def feed_forward(self, input_volume):
-		print self.pad
-	
+	def forward(self, input_volume):
+		# I don't do anything yet
+		return
 
-	# def generate_filters(self):
-	# 	w = np.random.randn(n) * sqrt(2.0/n)
+	def backward(self, input_volume):
+		# I don't do anything yet
+		return
