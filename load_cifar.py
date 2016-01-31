@@ -29,5 +29,6 @@ def images_to_volumes():
 		image_volume.add_volume_slice(r_slice, g_slice, b_slice)
 		# add to list containing all image volumes
 		volumes.append(image_volume)
-	return volumes
 
+
+	return (volumes, batch_data['labels'])
