@@ -6,8 +6,10 @@ from src.net_network import net_network
 layer_structure = []
 
 # continue to add layers (ReLu, conv, pool, softmax, etc)
-layer_structure.append({'type':'conv', 'field_size':3, 'filter_count':16, 'stride':1, 'padding':2})
+layer_structure.append({'type':'input', 'out_height':32, 'out_width':32, 'out_depth':3})
+layer_structure.append({'type':'conv', 'field_size':5, 'filter_count':20, 'stride':1, 'padding':2})
+layer_structure.append({'type':'relu'})
 layer_structure.append({'type':'pool', 'field_size':2})
 
 # create a network with the layer specificications
-j = net_network(layer_structure)
+net = net_network(layer_structure)
