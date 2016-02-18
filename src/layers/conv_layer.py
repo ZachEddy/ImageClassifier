@@ -4,6 +4,7 @@ from src.volume import volume
 from src.net_utilities import is_int
 	
 class conv_layer:
+	# constructor
 	def __init__(self, field_size, filter_count, stride, padding, in_height, in_width, in_depth):
 		# set class variables
 		self.field_size = field_size
@@ -22,124 +23,90 @@ class conv_layer:
 		# initialize filter volumes
 		self.initialize_filters()
 
-	def calc_output_dimensions(self):
-		# define the output volume dimensions and make sure the inputs are valid
-		self.out_height = (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1
-		self.out_width = (self.in_width - self.field_size + 2.0 * self.padding) / self.stride + 1
-		self.out_depth = self.filter_count
+	# a function to calculate output volume height based on input volume height
+	def calc_output_height(self):
+		return (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1
 
-		# ensure integer dimensions for output volume
+	# a function to calculate output volume width based on input volume width
+	def calc_output_width(self):
+		return (self.in_width - self.field_size + 2.0 * self.padding) / self.stride + 1
+
+	# a function to check user-defined layer specs will produce a valid output (no non-integer pixel values)
+	def check_user_definition(self):
+		# quit the program if any of the dimensions aren't integers
 		if not(is_int(self.out_height)) or (not is_int(self.out_width)) or (not is_int(self.out_depth)):
 			print "Input dimensions into conv layer aren't valid"
 			exit()
 
+	# a function to make sure that inputs into the conv layer match with what it expects
+	def check_input_dimensions(self, input_volume):
+		if (input_volume.height != self.in_height) or (input_volume.width != self.in_width) or (input_volume.depth != self.in_depth):
+			print "dimensions of input volume do not match expected dimensions"
+			quit()
+	
+	# a function to calculate the dimensions of the output volume
+	def calc_output_dimensions(self):
+		# define the output volume dimensions and make sure the inputs are valid
+		self.out_height = self.calc_output_height()
+		self.out_width = self.calc_output_width()
+		self.out_depth = self.filter_count
+
+		# check to make sure the user enterered valid layer specs (no part-pixels)
+		self.check_user_definition()
+		
+		# assuming the output volumes are integer values, then make them integers in computer terms (ex: 6.0 --> 6) 
 		self.out_height = int(self.out_height)
 		self.out_width = int(self.out_width)
 		self.out_depth = int(self.out_depth)
 
-
+	# a function to initialize the filter volumes
 	def initialize_filters(self):
-		# filters will also be represented as volumes, where each slice corresponds to a slice of the input volume
-		# the total number of filter volumes will be the filter_count
+		# a list to hold all the filter volumes - depth of volumes is the depth of the input volume
+		# a filter will be paired with inputs from each layer of depth
 		filters = []
 
-		# create as many filter volumes as specified by the user (would be handy to have a 'int.times' method like Ruby, but whatever)
+		# calculate the area of the receptive field
 		weight_count = self.field_size ** 2
-		for i in range(self.filter_count):
 
+		# create filter volumes for the number of sets the user specifies. If depth is 3, and the user specifies
+		# 20 filter sets, then there will be 60 total filter. If the receptive field size is 3, then the 
+		# total number of weights will be 540. (3 * 20 * (3^2))
+		for i in range(self.filter_count):
+			# create a list of weights that will later be transformed into a volume of weights (filter sets)
+			# initialization function: w = np.random.randn(n) * sqrt(2.0/n)
 			filter_volume = np.array([])
 
-			
-			# 
+			# go through the full depth of the input
 			for j in range(self.in_depth):
+				# create the weights and add them on
 				weights = np.random.randn(weight_count) * np.sqrt(2.0/weight_count)
 				filter_volume = np.append(filter_volume, weights)
-			
+
+			# reshape them into a volume of weights, then add it to the list of filters
 			filter_volume = np.reshape(filter_volume, (self.in_depth, self.field_size, self.field_size))
 			filters.append(volume(filter_volume))
-
+		
+		# assign as an instance variable
 		self.filters = filters
 
-
+	# a method that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
-		# I don't do anything yet
-		return
+		# check to make sure the input is what the layer expects
+		self.check_input_dimensions(input_volume)
 
-
-
-
-
-	# def field_inputs(column, row):
-
-		# return
-
-
-	# def 
-
-
-	def forward(self, volume):
-		output_volume = []
-
-		# go through all the filters
+		# go through all the filters, storing the result of a convolution in an output array
+		output_slice = []
 		for filter_volume in self.filters:
-			
-
-
-			output_slice = np.empty((self.out_height, self.out_width))
-
-
-			# generate a slice in the output volume, row by column
-			# start by going through all the rows
-			print self.out_height
-			print self.out_width
 			for i in range(self.out_height):
+				# find the current 'y' position of the input image
 				row = i * self.stride
 				
-				# for all the rows, go through all the columns
 				for j in range(self.out_width):
+					# find the current 'x' position of the input image
 					col = j * self.stride
-
-					depth_column = volume[:,row + self.stride, col + self.stride]
-					conv_calculation = np.sum(depth_column * filter_volume.volume_slices)
-					output_slice = np.append(output_slice, conv_calculation)
-
-			output_slice = output_slice.reshape(self.out_height, self.out_width)
-			output_volume.append(output_slice)
-			quit()
-
-		output_volume = np.array(output_volume)
-		return output_volume
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		# # traverse each row of the matrix (rows correspond to the height dimension)
-		# for i in range(out_height):
-		# 	row = i * stride
-		# 	# traverse each column of the matrix (rows correspond to the height dimension)
-		# 	for j in range(out_width):
-		# 		# inputs into the filters
-		# 		input_neurons = []
-		# 		col = j * stride
-
-		# 		# k to the rows within the receptive field
-		# 		for k in field_size:
-		# 			input_neurons.append(volume_slice[i + k][j:j+field_size])
-
-		# return
-
-	def backward(self, input_volume):
-		# I don't do anything yet
-		return
+					# element-wise multiply the depth column by the filters to yield a single value from the convolution
+					# find the inputs for a single convolution step
+					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
+					output_slice.append(np.sum(depth_column * filter_volume.volume_slices))
+		# return the result of a convolution on the entire volume
+		return np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width))
