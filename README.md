@@ -1,7 +1,7 @@
 <h1>BacteriaNet</h1>
 <b>A neural network implemented in Python to classify images of bacteria and other microorganisms</b>
 <hr>
-
+<br>
 I'm building a convolutional neural network to identify images of single-celled organisms. To get things rolling, I've started by using the CIFAR-10 dataset. This contains five batches of 10,000 32x32 pixel images. Each of the 10 training categories (cars, frogs, boats, etc.) has 1,000 images each.
 <br>
 
@@ -9,10 +9,6 @@ Once I get it working, I'd like to mount it on a Django app that lets users feed
 <br>
 
 We'll see how it goes!
-
-<br>
-
-
 <h4> Reference </h4>
 <ul>
   <li>
