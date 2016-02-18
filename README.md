@@ -12,6 +12,6 @@ We'll see how it goes!
 <h4> Reference </h4>
 <ul>
   <li>
-   <a href="learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a>, Alex Krizhevsky, 2009.
+   <a href="https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a>, Alex Krizhevsky, 2009.
   </li>
 </ul>
