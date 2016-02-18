@@ -1,3 +1,4 @@
+import numpy as np
 # a class to manage the ReLu activation layer
 class relu_layer: 
 	def __init__(self, in_height, in_width, in_depth):
@@ -11,6 +12,7 @@ class relu_layer:
 		self.out_width = in_width
 		self.out_depth = in_depth
 
-	def relu_activation():
-		# I don't do anything yet
-		return
+	def relu_single(neuron):
+		return max(0, neuron)
+
+	relu_volume = np.vectorize(relu_single)
