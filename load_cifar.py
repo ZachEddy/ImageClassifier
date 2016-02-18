@@ -23,5 +23,5 @@ def images_to_volumes():
 	for rgb_array in batch_data['data']:
 		image_volume = volume(np.reshape(rgb_array, (3,32,32)))
 		volumes.append(image_volume)
-		
+	# return the image volumed paired with their labels
 	return (volumes, batch_data['labels'])
