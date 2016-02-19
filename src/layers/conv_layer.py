@@ -66,26 +66,20 @@ class conv_layer:
 		filters = []
 
 		# calculate the area of the receptive field
-		weight_count = self.field_size ** 2
+		weight_count = (self.field_size ** 2) * self.in_depth
 
 		# create filter volumes for the number of sets the user specifies. If depth is 3, and the user specifies
 		# 20 filter sets, then there will be 60 total filter. If the receptive field size is 3, then the 
 		# total number of weights will be 540. (3 * 20 * (3^2))
 		for i in range(self.filter_count):
-			# create a list of weights that will later be transformed into a volume of weights (filter sets)
-			# initialization function: w = np.random.randn(n) * sqrt(2.0/n)
-			filter_volume = np.array([])
-
-			# go through the full depth of the input
-			for j in range(self.in_depth):
-				# create the weights and add them on
-				weights = np.random.randn(weight_count) * np.sqrt(2.0/weight_count)
-				filter_volume = np.append(filter_volume, weights)
-
-			# reshape them into a volume of weights, then add it to the list of filters
+			# initialize weights for every filter
+			# recommended initalization function for ReLu: np.random.randn(n) * np.sqrt(2.0 / n)
+			filter_volume = np.random.randn(weight_count) * np.sqrt(2.0 / weight_count)
 			filter_volume = np.reshape(filter_volume, (self.in_depth, self.field_size, self.field_size))
+			
+			# turn filters into a new volume
 			filters.append(volume(filter_volume))
-		
+			
 		# assign as an instance variable
 		self.filters = filters
 
@@ -107,6 +101,6 @@ class conv_layer:
 					# element-wise multiply the depth column by the filters to yield a single value from the convolution
 					# find the inputs for a single convolution step
 					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
-					output_slice.append(np.sum(depth_column * filter_volume.volume_slices))
+					output_slice.append(np.sum(depth_column * filter_volume.volume_slices) + 0.1)
 		# return the result of a convolution on the entire volume
 		return volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
