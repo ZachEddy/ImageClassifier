@@ -100,7 +100,7 @@ class conv_layer:
 			for i in range(self.out_height):
 				# find the current 'y' position of the input image
 				row = i * self.stride
-				
+
 				for j in range(self.out_width):
 					# find the current 'x' position of the input image
 					col = j * self.stride
@@ -109,4 +109,4 @@ class conv_layer:
 					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
 					output_slice.append(np.sum(depth_column * filter_volume.volume_slices))
 		# return the result of a convolution on the entire volume
-		return np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width))
+		return volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
