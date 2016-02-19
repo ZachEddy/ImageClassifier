@@ -1,11 +1,13 @@
 # a class made to manage feeding images to the network
 import load_cifar
 import numpy as np
+import random as random #remove this when done
 from src.layers.conv_layer import conv_layer
 from src.layers.pool_layer import pool_layer
 from src.layers.input_layer import input_layer
 from src.layers.relu_layer import relu_layer
 from src.volume import volume
+
 from PIL import Image
 
 class net_network:
@@ -80,9 +82,34 @@ class net_network:
 		print self.layers
 
 	# input volume should be an image volume
-	def forward(self, input_volume):
+	def forward(self, image_volume):
+		print image_volume.volume_slices
+		first_vol = self.layers[0].forward(image_volume)
+
+		# print first_vol.volume_slices
+
+		second_vol = self.layers[1].forward(first_vol)
+		# print second_vol.volume_slices
+		# ignores the relu layer
+		third_vol = self.layers[3].forward(second_vol)
+		print third_vol.volume_slices
+
+
+
+
 		# testing the convolution layer
-		print self.layers[1].forward(input_volume)
+		# test_volume = random.sample(range(-100,100), 192)
+		# test_volume = np.reshape(test_volume, (3,8,8))
+		# test_volume = volume(test_volume)
+
+		# print test_volume.volume_slices
+		# pool_test = pool_layer(2,8,8,3)
+		# print pool_test.forward(test_volume)
+
+
+
+		
+		# print self.layers[1].forward(input_volume)
 
 
 
