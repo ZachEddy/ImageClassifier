@@ -1,5 +1,7 @@
 # a class to manage the pooling layer
 from src.net_utilities import is_int
+import numpy as np
+from src.volume import volume
 
 class pool_layer:
 	def __init__(self, field_size, in_height, in_width, in_depth):
@@ -21,9 +23,27 @@ class pool_layer:
 			print "Input dimensions into pool layer aren't valid"
 			exit()
 
-	def forward(self, input_volume):
-		# I don't do anything yet
-		return
+		# assuming the output volumes are integer values, then make them integers in computer terms (ex: 6.0 --> 6) 
+		self.out_height = int(self.out_height)
+		self.out_width = int(self.out_width)
+		self.out_depth = int(self.out_depth)
+
+	def forward(self, input_volume):	
+		output_volume = []
+		# iterate along the depth dimension of the volume
+		for volume_slice in input_volume.volume_slices:
+			# iterate along the rows (height dimension)
+			for i in range(self.out_height):
+				row = i * self.field_size
+				# iterate along the columns (width dimension)
+				for j in range(self.out_width):
+					col = j * self.field_size
+					# max pool the inputs within the receptive field
+					inputs = volume_slice[row:row+self.field_size,col:col+self.field_size]
+					output_volume.append(np.max(inputs))
+
+		# return the new volume reshaped with the expected output dimensions
+		return volume(np.reshape(output_volume, (self.out_depth, self.out_height, self.out_width)))
 
 	def backward(self, input_volume):
 		# I don't do anything yet
