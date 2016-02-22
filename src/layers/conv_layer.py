@@ -23,25 +23,35 @@ class conv_layer:
 		# initialize filter volumes
 		self.initialize_filters()
 
+	def add_padding(self, input_volume):
+		# minimize number of references to instance variable 'self.padding'
+		padding = self.padding
+		if padding > 0:
+			pad_specs = ((0,0), (padding, padding), (padding, padding))
+			input_volume.volume_slices = np.pad(input_volume.volume_slices, pad_specs, mode='constant',constant_values=0)
+		return input_volume
+
+
 	# a function to calculate output volume height based on input volume height
 	def calc_output_height(self):
-		return (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1
+		return (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1.0
 
 	# a function to calculate output volume width based on input volume width
 	def calc_output_width(self):
-		return (self.in_width - self.field_size + 2.0 * self.padding) / self.stride + 1
+		return (self.in_width - self.field_size + 2.0 * self.padding) / self.stride + 1.0
 
 	# a function to check user-defined layer specs will produce a valid output (no non-integer pixel values)
 	def check_user_definition(self):
 		# quit the program if any of the dimensions aren't integers
+		print self.out_height, self.out_width, self.out_depth
 		if not(is_int(self.out_height)) or (not is_int(self.out_width)) or (not is_int(self.out_depth)):
 			print "Input dimensions into conv layer aren't valid"
-			exit()
+			quit()
 
 	# a function to make sure that inputs into the conv layer match with what it expects
 	def check_input_dimensions(self, input_volume):
 		if (input_volume.height != self.in_height) or (input_volume.width != self.in_width) or (input_volume.depth != self.in_depth):
-			print "dimensions of input volume do not match expected dimensions"
+			print "Dimensions of input volume do not match expected dimensions"
 			quit()
 	
 	# a function to calculate the dimensions of the output volume
@@ -76,7 +86,7 @@ class conv_layer:
 			# recommended initalization function for ReLu: np.random.randn(n) * np.sqrt(2.0 / n)
 			filter_volume = np.random.randn(weight_count) * np.sqrt(2.0 / weight_count)
 			filter_volume = np.reshape(filter_volume, (self.in_depth, self.field_size, self.field_size))
-			
+
 			# turn filters into a new volume
 			filters.append(volume(filter_volume))
 			
@@ -86,7 +96,12 @@ class conv_layer:
 	# a method that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
 		# check to make sure the input is what the layer expects
+		print "HERE:", self.in_height, self.in_width, self.in_depth
+		print "HERE:", self.out_height, self.out_width, self.out_depth
 		self.check_input_dimensions(input_volume)
+
+		# add padding to input volume if specified (@me: consider not doing a variable reassignment - could be expensive computationally)
+		input_volume = self.add_padding(input_volume)
 
 		# go through all the filters, storing the result of a convolution in an output array
 		output_slice = []
