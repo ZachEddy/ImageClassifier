@@ -12,6 +12,12 @@ class pool_layer:
 		self.in_depth = in_depth
 		self.calc_output_dimensions()
 
+	# a function to make sure the inputs will produce a valid output
+	def check_user_definition(self):
+		if not(is_int(self.out_height)) or not(is_int(self.out_width)):
+			print "Input dimensions into pool layer aren't valid"
+			quit()
+
 	def calc_output_dimensions(self):
 		# define the output volume dimensions and make sure the inputs are valid
 		self.out_height = self.in_height / (self.field_size * 1.0)
@@ -19,9 +25,7 @@ class pool_layer:
 		self.out_depth = self.in_depth
 
 		# ensure integer dimensions for output volume
-		if not(is_int(self.out_height)) or not(is_int(self.out_width)):
-			print "Input dimensions into pool layer aren't valid"
-			exit()
+		self.check_user_definition()
 
 		# assuming the output volumes are integer values, then make them integers in computer terms (ex: 6.0 --> 6) 
 		self.out_height = int(self.out_height)
