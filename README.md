@@ -1,6 +1,8 @@
 <h1>BacteriaNet</h1>
 <b>A neural network implemented in Python to classify images of microorganisms</b>
 <br>
+<br>
+
 I'm building a convolutional neural network to identify images of single-celled organisms. To get things rolling, I've started by using the CIFAR-10 dataset. This contains five batches of 10,000 32x32 pixel images. Each of the 10 training categories (cars, frogs, boats, etc.) has 1,000 images each.
 <br>
 
