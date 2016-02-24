@@ -1,17 +1,15 @@
 # a class made to manage feeding images to the network
 import load_cifar
 import numpy as np
-import random as random #remove this when done
 from src.layers.conv_layer import conv_layer
 from src.layers.pool_layer import pool_layer
 from src.layers.input_layer import input_layer
 from src.layers.relu_layer import relu_layer
+from src.layers.fc_layer import fc_layer
+from src.layers.tanh_layer import tanh_layer
 from src.volume import volume
 
-from PIL import Image
-
 class net_network:
-
 	def __init__(self, layer_structure):
 		# load the cifar-10 images and their corresponding labels
 		cifar_data = load_cifar.images_to_volumes()
@@ -23,7 +21,8 @@ class net_network:
 		self.build_layers(layer_structure)
 		self.forward(self.image_volumes[0])
 
-
+	# a function that initializes each layer depending on the user specs.
+	# basically a massive if/elif/else block
 	def build_layers(self, layer_structure):
 		# build layers using the information provided from the user
 		image_input = layer_structure.pop(0)
@@ -77,34 +76,89 @@ class net_network:
 				# add the new conv layer (dupe code)
 				self.layers.append(new_layer)
 				previous = new_layer
+			elif layer['type'] == 'tanh':
+				# create new ReLu layer (activation layer)
+				new_layer = tanh_layer(
+					previous.out_height,
+					previous.out_width,
+					previous.out_depth)
+				self.layers.append(new_layer)
+				previous = new_layer
+				# add the new conv layer (dupe code)
+			elif layer['type'] == 'fully_connected':
+				# fully connected layer
+				new_layer = fc_layer(
+					previous.out_height,
+					previous.out_width,
+					previous.out_depth,
+					layer['neuron_count'])
+				self.layers.append(new_layer)
+				previous = new_layer
 			else:
 				print "Unknown layer: \'%s\'" % (layer['type'])
-		print self.layers
+				quit()
+		# print self.layers
 
 	# input volume should be an image volume
 	def forward(self, image_volume):
-		print image_volume.volume_slices
-		first_vol = self.layers[0].forward(image_volume)
 
-		# print first_vol.volume_slices
+		print "START!"
+		# print image_volume.volume_slices
+		# print "_--__-_---------~~~~~~~~~~~~~~"
+		input_volume = self.layers[0].forward(image_volume)
+		for layer in self.layers:
+			if type(layer) == "input_layer":			
+				continue
 
-		second_vol = self.layers[1].forward(first_vol)
-		# print second_vol.volume_slices
-		# ignores the relu layer
-		third_vol = self.layers[3].forward(second_vol)
-		print third_vol.volume_slices
+			# print input_volume.volume_slices
+			# print layer, "_______________________________________________________________"
+			# print ""
+			input_volume = layer.forward(input_volume)
+
+		print "DONE!"
+
+		print input_volume.volume_slices
+
+		# vol = np.array([[[1,2],[3,4]],[[4,5],[6,7]]])
+		# print "vol", vol
+		# # def __init__(self, in_height, in_width, in_depth, neuron_count):
+		# fc = fc_layer(2,2,2,2)
+		# vol = volume(vol)
+
+		# vol = fc.forward(vol)
+
+		# print "fc", vol.volume_slices
+
+		# tanh = tanh_layer(1,1,2)
+
+		# vol = tanh.forward(vol)
+		# print "tanh", vol.volume_slices
+		# print image_volume.volume_slices
+		# first_vol = self.layers[0].forward(image_volume)
+
+		# # print first_vol.volume_slices
+
+		# second_vol = self.layers[1].forward(first_vol)
+		# # print second_vol.volume_slices
+		# # ignores the relu layer
+		# third_vol = self.layers[3].forward(second_vol)
+		# print third_vol.volume_slices
 
 
 
 
-		# testing the convolution layer
+		# # testing the pool layer
 		# test_volume = random.sample(range(-100,100), 192)
 		# test_volume = np.reshape(test_volume, (3,8,8))
 		# test_volume = volume(test_volume)
 
+
+
 		# print test_volume.volume_slices
-		# pool_test = pool_layer(2,8,8,3)
-		# print pool_test.forward(test_volume)
+		# relu_test = relu_layer(3,8,8)
+		# test_vol = relu_test.forward(test_volume)
+		# print "-----"
+		# print test_vol.volume_slices
 
 
 
