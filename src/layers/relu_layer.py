@@ -8,7 +8,7 @@ class relu_layer:
 		self.in_width = in_width
 		self.in_depth = in_depth
 		
-		# define output dimensions (they're the same, but needed )
+		# define output dimensions (they're the same, but needed for the next layer)
 		self.out_height = in_height
 		self.out_width = in_width
 		self.out_depth = in_depth
@@ -16,11 +16,11 @@ class relu_layer:
 		# vectorize the ReLU activation function so it can easily be mapped over neuron volumes
 		self.relu_volume = np.vectorize(self.relu_single)
 
-	# run the activation function on a single neuron
+	# a function that values the ReLu activation function on a single neuron in the volume
 	def relu_single(self, neuron):
 		# the activation function is simply max(0,x). consider making it shakey at some point down the road
 		return max(0, neuron)
 
-	# the feed-forward function for a ReLu layer
+	# a function that feeds the input volume through the network
 	def forward(self, input_volume):
 		return volume(self.relu_volume(input_volume.volume_slices))

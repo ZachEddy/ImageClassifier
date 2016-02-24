@@ -18,6 +18,7 @@ class pool_layer:
 			print "Input dimensions into pool layer aren't valid"
 			quit()
 
+	# a function to calculate the output dimensions of a volume after pooling has been done
 	def calc_output_dimensions(self):
 		# define the output volume dimensions and make sure the inputs are valid
 		self.out_height = self.in_height / (self.field_size * 1.0)
@@ -32,6 +33,7 @@ class pool_layer:
 		self.out_width = int(self.out_width)
 		self.out_depth = int(self.out_depth)
 
+	# a function that feeds a given volume through the pooling layer
 	def forward(self, input_volume):	
 		output_volume = []
 		# iterate along the depth dimension of the volume

@@ -23,6 +23,7 @@ class conv_layer:
 		# initialize filter volumes
 		self.initialize_filters()
 
+	# a function to add a padded border around the edges of a volume along the width and height dimensions
 	def add_padding(self, input_volume):
 		# minimize number of references to instance variable 'self.padding'
 		padding = self.padding
@@ -43,7 +44,7 @@ class conv_layer:
 	# a function to check user-defined layer specs will produce a valid output (no non-integer pixel values)
 	def check_user_definition(self):
 		# quit the program if any of the dimensions aren't integers
-		print self.out_height, self.out_width, self.out_depth
+		# print self.out_height, self.out_width, self.out_depth
 		if not(is_int(self.out_height)) or (not is_int(self.out_width)) or (not is_int(self.out_depth)):
 			print "Input dimensions into conv layer aren't valid"
 			quit()
@@ -93,7 +94,7 @@ class conv_layer:
 		# assign as an instance variable
 		self.filters = filters
 
-	# a method that runs the convolution process on a given input volume from the previous layer
+	# a function that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
 		# check to make sure the input is what the layer expects
 		print "HERE:", self.in_height, self.in_width, self.in_depth
