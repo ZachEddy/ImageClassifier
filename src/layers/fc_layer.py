@@ -16,6 +16,9 @@ class fc_layer:
 		# setup the weights
 		self.initalize_weights()
 
+		# setup the biases
+		self.initialize_biases()
+
 	# a function to initialize the weights of the fully connected layer
 	def initalize_weights(self):
 		weights = []
@@ -28,12 +31,22 @@ class fc_layer:
 		# set as an instance variable for later methods
 		self.weights = weights
 
+	def initialize_biases(self):
+		# make a matrix with the dimensions of the output volume
+		biases = np.zeros(self.out_depth * self.out_height * self.out_width)
+		biases = np.reshape(biases, (self.out_depth, self.out_height, self.out_width))
+
+		# fill the matrix with 0.1 (initial bias value) and make it an instance variable
+		biases.fill(0.1)
+		self.biases = biases
+
 	# a function that feeds an input volume through the network
 	def forward(self, input_volume):
 		output = np.array([])
 		# each matrix of weights corresponds to a slice in the output volume
 		for weight in self.weights:
-			output = np.append(output, np.sum(weight * input_volume.volume_slices) + 0.1)
-		
+			output = np.append(output, np.sum(weight * input_volume.volume_slices))
+		output = output + self.biases 
+
 		# maybe redefine which axix the wights are on (height, width, or depth)?
 		return volume(np.reshape(output, (1,1, self.out_width)))
