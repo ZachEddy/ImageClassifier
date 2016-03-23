@@ -27,7 +27,7 @@ class fc_layer:
 		for i in range(self.out_width):
 			weight_gen = np.random.randn(weight_count) * np.sqrt(2.0 / weight_count)
 			weight_gen = np.reshape(weight_gen, (self.in_depth, self.in_height, self.in_width))
-			weights.append(weight_gen)
+			weights.append(volume(weight_gen))
 		# set as an instance variable for later methods
 		self.weights = weights
 
@@ -42,11 +42,36 @@ class fc_layer:
 
 	# a function that feeds an input volume through the network
 	def forward(self, input_volume):
+		self.input_volume = input_volume
 		output = np.array([])
 		# each matrix of weights corresponds to a slice in the output volume
 		for weight in self.weights:
-			output = np.append(output, np.sum(weight * input_volume.volume_slices))
+			output = np.append(output, np.sum(weight.volume_slices * input_volume.volume_slices))
 		output = output + self.biases 
 
-		# maybe redefine which axix the wights are on (height, width, or depth)?
-		return volume(np.reshape(output, (1,1, self.out_width)))
+		# maybe redefine which axix the wights are on (height, width, or depth)? Something to consider
+		self.output_volume = volume(np.reshape(output, (1,1, self.out_width)))
+		
+		return self.output_volume
+
+	# a function that computes gradients for the fully connected layer
+	def backward(self):
+		# zero-out existing gradients
+		self.input_volume.zero_gradient()
+
+		# loop through each group of weights, the corresponding bias, and the corresponding gradient from the previous layer
+		# it's an ugly zip function, but it makes everything else easier to read (also might be slow - something to think about)
+		for weight, bias, chain in zip(self.weights, self.biases[0][0], self.output_volume.gradient_slices[0][0]):
+			# compute the gradients of the input volume
+			self.input_volume.gradient_slices += weight.volume_slices * chain
+			# compute the gradients of each individual weight
+			weight.gradient_slices += self.input_volume.volume_slices * chain
+			# update the bias
+			bias += chain
+
+		# return the input volume with the new gradients
+		return self.input_volume
+
+
+
+
