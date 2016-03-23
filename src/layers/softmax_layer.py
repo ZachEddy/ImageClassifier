@@ -40,9 +40,10 @@ class softmax_layer:
 			# check if output corresponds probability to the actual label (only something we know during training)
 			# if an output doesn't match the label, it will be zero
 			label_hit = 1 if i == label else 0
-
+			
 			# find gradient by subtracting the probability from the label hit (either one or zero)
 			self.input_volume.gradient_slices[0,0,i] = -(label_hit - self.output_volume.volume_slices[0,0,i])
 		
 		# evaluate the loss and store it as an instance variable
 		self.loss = -np.log10(self.output_volume.volume_slices[0,0,label])
+		return self.input_volume
