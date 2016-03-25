@@ -34,8 +34,18 @@ class pool_layer:
 		self.out_depth = int(self.out_depth)
 
 	# a function that feeds a given volume through the pooling layer
-	def forward(self, input_volume):	
+	def forward(self, input_volume):
+		# save for backprop
+		self.input_volume = input_volume
+		
+		# store the max's (x,y) position in the original input volume
+		# this will later be used to transfer gradients in backprop
+		max_row_positions = []
+		max_col_positions = []
+		
+		# output volume of the pooling process
 		output_volume = []
+
 		# iterate along the depth dimension of the volume
 		for volume_slice in input_volume.volume_slices:
 			# iterate along the rows (height dimension)
@@ -44,13 +54,38 @@ class pool_layer:
 				# iterate along the columns (width dimension)
 				for j in range(self.out_width):
 					col = j * self.field_size
-					# max pool the inputs within the receptive field
+					# find the inputs within the current receptive field
 					inputs = volume_slice[row:row+self.field_size,col:col+self.field_size]
+					
+					# find the max's (x,y) position local to the receptive field
+					# add the column and row to find max's position within the input
+					max_positions = np.unravel_index(inputs.argmax(), inputs.shape)
+					max_row_positions.append(max_positions[0] + row)
+					max_col_positions.append(max_positions[1] + col)
+
+					# add the max value to the final output volume
 					output_volume.append(np.max(inputs))
+		
+		# reshape arrays into volumes (both saved as instance variables for backprop)
+		self.output_volume = volume(np.reshape(output_volume, (self.out_depth, self.out_height, self.out_width)))
+		self.max_row_positions = np.reshape(max_row_positions, (self.out_depth, self.out_height, self.out_width))
+		self.max_col_positions = np.reshape(max_col_positions, (self.out_depth, self.out_height, self.out_width))
 
-		# return the new volume reshaped with the expected output dimensions
-		return volume(np.reshape(output_volume, (self.out_depth, self.out_height, self.out_width)))
+		return self.output_volume
 
-	def backward(self, input_volume):
-		# I don't do anything yet
-		return
+	def backward(self):
+		# zero-out existing gradients
+		self.input_volume.zero_gradient()
+
+		# go through each slice of the input and output
+		for z in range(self.out_depth):
+			# go through the output volume row by column
+			for y in range(self.out_height):
+				for x in range(self.out_width):
+					# referencing instance variables a TON. Maybe change this!
+					chain = self.output_volume.gradient_slices[z][y][x]
+					max_row = self.max_row_positions[z][y][x]
+					max_col = self.max_col_positions[z][y][x]
+					self.input_volume.gradient_slices[z][max_row][max_col] += chain
+
+		return self.input_volume
