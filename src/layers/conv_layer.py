@@ -97,12 +97,12 @@ class conv_layer:
 	# a function that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
 		# check to make sure the input is what the layer expects
-		print "HERE:", self.in_height, self.in_width, self.in_depth
-		print "HERE:", self.out_height, self.out_width, self.out_depth
+		
 		self.check_input_dimensions(input_volume)
 
 		# add padding to input volume if specified (@me: consider not doing a variable reassignment - could be expensive computationally)
 		input_volume = self.add_padding(input_volume)
+		self.input_volume = input_volume
 
 		# go through all the filters, storing the result of a convolution in an output array
 		output_slice = []
@@ -117,6 +117,49 @@ class conv_layer:
 					# element-wise multiply the depth column by the filters to yield a single value from the convolution
 					# find the inputs for a single convolution step
 					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
-					output_slice.append(np.sum(depth_column * filter_volume.volume_slices) + 0.1)
+					output_slice.append(notp.sum(depth_column * filter_volume.volume_slices) + 0.1)
 		# return the result of a convolution on the entire volume
-		return volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
+		# 
+		self.output_volume = volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
+		return self.output_volume
+
+
+	def backward(self):
+		# zero-out the gradients in the input volume
+		self.input_volume.zero_gradient()
+
+		# go through all the filters
+		for filter_volume, gradient in zip(self.filters, self.output_volume.gradients_slices):
+			for i in range(self.out_height):
+				# row (x position) of the input
+				row = i * self.stride
+				for j in range(self.out):
+					# column (y position) of the input
+					col = j * self.stride
+					# get the gradient of the output at the (x,y) position (chain rule here)
+					chain = gradient[i][j]
+
+					# gather inputs within the receptive field's current position along the depth dimension
+					# use these inputs to change the gradients of the filter
+					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
+					filter_volume.gradients_slices += depth_column * chain
+
+					# similar idea here - grab input gradients and adjust them using the filters (weight matrices)
+					# and he gradient from the previous layer
+					input_volume.gradients_slices[:,row:row + self.field_size, col:col + self.field_size] += filter_volume.volume_slices * chain
+					# adjust biasees here (first you have to add them, dingus)
+					
+
+
+
+
+
+
+
+
+
+
+
+
+
+
