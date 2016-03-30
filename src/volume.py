@@ -8,3 +8,8 @@ class volume:
 		self.height = len(volume[0])
 		self.depth = len(volume)
 		self.volume_slices = volume
+		self.zero_gradient()
+
+	# a function to reset the gradient after each backprop cycle
+	def zero_gradient(self):
+		self.gradient_slices = np.zeros((self.depth, self.height, self.width))
