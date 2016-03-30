@@ -23,15 +23,17 @@ class conv_layer:
 		# initialize filter volumes
 		self.initialize_filters()
 
+		# setup the biases
+		self.initialize_biases()
+
 	# a function to add a padded border around the edges of a volume along the width and height dimensions
-	def add_padding(self, input_volume):
+	def add_padding(self, vol):
 		# minimize number of references to instance variable 'self.padding'
 		padding = self.padding
 		if padding > 0:
 			pad_specs = ((0,0), (padding, padding), (padding, padding))
-			input_volume.volume_slices = np.pad(input_volume.volume_slices, pad_specs, mode='constant',constant_values=0)
-		return input_volume
-
+			vol = np.pad(vol, pad_specs, mode='constant',constant_values=0)
+		return vol
 
 	# a function to calculate output volume height based on input volume height
 	def calc_output_height(self):
@@ -54,7 +56,7 @@ class conv_layer:
 		if (input_volume.height != self.in_height) or (input_volume.width != self.in_width) or (input_volume.depth != self.in_depth):
 			print "Dimensions of input volume do not match expected dimensions"
 			quit()
-	
+
 	# a function to calculate the dimensions of the output volume
 	def calc_output_dimensions(self):
 		# define the output volume dimensions and make sure the inputs are valid
@@ -69,6 +71,14 @@ class conv_layer:
 		self.out_height = int(self.out_height)
 		self.out_width = int(self.out_width)
 		self.out_depth = int(self.out_depth)
+
+	def initialize_biases(self):
+		# make a matrix with the dimensions of the output volume
+		biases = np.zeros(self.out_depth)
+
+		# fill the matrix with 0.1 (initial bias value) and make it an instance variable
+		biases.fill(0.1)
+		self.biases = biases
 
 	# a function to initialize the filter volumes
 	def initialize_filters(self):
@@ -101,12 +111,12 @@ class conv_layer:
 		self.check_input_dimensions(input_volume)
 
 		# add padding to input volume if specified (@me: consider not doing a variable reassignment - could be expensive computationally)
-		input_volume = self.add_padding(input_volume)
+		input_volume.volume_slices = self.add_padding(input_volume.volume_slices)
 		self.input_volume = input_volume
 
 		# go through all the filters, storing the result of a convolution in an output array
 		output_slice = []
-		for filter_volume in self.filters:
+		for filter_volume, bias in zip(self.filters, self.biases):
 			for i in range(self.out_height):
 				# find the current 'y' position of the input image
 				row = i * self.stride
@@ -117,23 +127,25 @@ class conv_layer:
 					# element-wise multiply the depth column by the filters to yield a single value from the convolution
 					# find the inputs for a single convolution step
 					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
-					output_slice.append(notp.sum(depth_column * filter_volume.volume_slices) + 0.1)
+					output_slice.append(np.sum(depth_column * filter_volume.volume_slices) + bias)
 		# return the result of a convolution on the entire volume
 		# 
 		self.output_volume = volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
 		return self.output_volume
 
-
 	def backward(self):
 		# zero-out the gradients in the input volume
+		# ugly code here - you should really rewrite this when it gets working
 		self.input_volume.zero_gradient()
-
-		# go through all the filters
-		for filter_volume, gradient in zip(self.filters, self.output_volume.gradients_slices):
+		self.input_volume.gradient_slices = self.add_padding(self.input_volume.gradient_slices)
+			
+		for filter_volume, gradient, bias in zip(self.filters, self.output_volume.gradient_slices, self.biases):
+			# zero out the gradient of the filter before continuing
+			filter_volume.zero_gradient()
 			for i in range(self.out_height):
 				# row (x position) of the input
 				row = i * self.stride
-				for j in range(self.out):
+				for j in range(self.out_width):
 					# column (y position) of the input
 					col = j * self.stride
 					# get the gradient of the output at the (x,y) position (chain rule here)
@@ -141,25 +153,18 @@ class conv_layer:
 
 					# gather inputs within the receptive field's current position along the depth dimension
 					# use these inputs to change the gradients of the filter
-					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
-					filter_volume.gradients_slices += depth_column * chain
+					depth_column = self.input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
+					filter_volume.gradient_slices += depth_column * chain
 
 					# similar idea here - grab input gradients and adjust them using the filters (weight matrices)
 					# and he gradient from the previous layer
-					input_volume.gradients_slices[:,row:row + self.field_size, col:col + self.field_size] += filter_volume.volume_slices * chain
-					# adjust biasees here (first you have to add them, dingus)
-					
+					self.input_volume.gradient_slices[:,row:row + self.field_size, col:col + self.field_size] += filter_volume.volume_slices * chain
 
+					# adjust bias
+					bias += chain		
+		
+		return self.input_volume
 
-
-
-
-
-
-
-
-
-
-
-
-
+	def train(self, rate):
+		for f in self.filters:
+			f.volume_slices += -(f.gradient_slices * 0.01)
