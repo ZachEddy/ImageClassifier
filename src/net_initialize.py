@@ -28,7 +28,7 @@ layer_structure.append({'type':'relu'})
 
 layer_structure.append({'type':'fully_connected', 'neuron_count':10})
 
-layer_structure.append({'type':'tanh'})
+layer_structure.append({'type':'softmax'})
 
 # create a network with the layer specificications
 net = net_network(layer_structure)
