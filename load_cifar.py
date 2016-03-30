@@ -13,7 +13,7 @@ def unpickle_batch(file_path):
 	return batch_data
 
 # convert cifar-10 image arrays to volumes
-def images_to_volumes():
+def images_to_volumes(path):
 	volumes = []
 	batch_data = unpickle_batch(file_path)
 	
