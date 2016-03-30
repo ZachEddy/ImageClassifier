@@ -58,10 +58,12 @@ class fc_layer:
 	def backward(self):
 		# zero-out existing gradients
 		self.input_volume.zero_gradient()
-
+		# self.input_volume.gradient_slices = add_padding(self.input_volume) #fix this
 		# loop through each group of weights, the corresponding bias, and the corresponding gradient from the previous layer
 		# it's an ugly zip function, but it makes everything else easier to read (also might be slow - something to think about)
 		for weight, bias, chain in zip(self.weights, self.biases[0][0], self.output_volume.gradient_slices[0][0]):
+
+			weight.zero_gradient()
 			# compute the gradients of the input volume
 			self.input_volume.gradient_slices += weight.volume_slices * chain
 			# compute the gradients of each individual weight
@@ -72,6 +74,8 @@ class fc_layer:
 		# return the input volume with the new gradients
 		return self.input_volume
 
-
+	def train(self, rate):
+		for w in self.weights:
+			w.volume_slices += -(w.gradient_slices * rate)
 
 
