@@ -75,7 +75,9 @@ class pool_layer:
 
 	def backward(self):
 		# zero-out existing gradients
-		self.input_volume.zero_gradient()
+		# self.input_volume.zero_gradient()
+
+		input_gradient = np.zeros((self.in_depth, self.in_height, self.in_width))
 
 		# go through each slice of the input and output
 		for z in range(self.out_depth):
@@ -86,6 +88,13 @@ class pool_layer:
 					chain = self.output_volume.gradient_slices[z][y][x]
 					max_row = self.max_row_positions[z][y][x]
 					max_col = self.max_col_positions[z][y][x]
-					self.input_volume.gradient_slices[z][max_row][max_col] += chain
+					input_gradient[z][max_row][max_col] = chain
 
+		self.input_volume.gradient_slices = input_gradient
 		return self.input_volume
+
+	def train(self, rate):
+		return
+
+	def params_grads(self):
+		return []
