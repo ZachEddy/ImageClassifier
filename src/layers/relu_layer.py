@@ -18,15 +18,18 @@ class relu_layer:
 
 	# a function that values the ReLu activation function on a single neuron in the volume
 	def activate_single(self, neuron):
+		if neuron > 0.0:
+			return neuron
+		return 0.0
 		# the activation function is simply max(0,x). consider making it leaky at some point down the road
-		return max(0, neuron)
+		# return max(0, neuron)
 
 	# a function that feeds the input volume through the network
 	def forward(self, input_volume):
 		# save volumes for backprop
 		self.input_volume = input_volume
 		self.output_volume = volume(self.activate_volume(input_volume.volume_slices))
-
+		# print self.output_volume.volume_slices
 		return self.output_volume
 
 	# apply the max(0,x) thresholding (ReLu activation) across the gradients
@@ -42,14 +45,17 @@ class relu_layer:
 		# go through gradient and output volumes
 		for output_value, output_gradient in values:
 			# do chain gradient from output gradient to input gradient
-			if output_value <= 0:
-				input_gradient.append(0)
+			if output_value <= 0.0:
+				input_gradient.append(0.0)
 			else:
 				input_gradient.append(output_gradient)
-
+		
 		# reshape the gradients and add them to the input volume's gradient
 		self.input_volume.gradient_slices = np.reshape(input_gradient, (self.in_depth, self.in_height, self.in_width))
 		return self.input_volume
 
 	def train(self, rate):
 		return
+
+	def params_grads(self):
+		return []
