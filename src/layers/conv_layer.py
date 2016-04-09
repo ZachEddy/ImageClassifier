@@ -35,6 +35,13 @@ class conv_layer:
 			vol = np.pad(vol, pad_specs, mode='constant',constant_values=0)
 		return vol
 
+	def trim_padding(self, vol):
+		padding = self.padding
+		if padding > 0:
+			new_vol = vol[:,padding:len(vol[0])-padding,padding:len(vol[0][0])-padding]
+			return new_vol
+		return vol
+
 	# a function to calculate output volume height based on input volume height
 	def calc_output_height(self):
 		return (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1.0
@@ -74,11 +81,12 @@ class conv_layer:
 
 	def initialize_biases(self):
 		# make a matrix with the dimensions of the output volume
-		biases = np.zeros(self.out_depth)
+		biases = np.zeros((1,1,self.out_depth))
 
 		# fill the matrix with 0.1 (initial bias value) and make it an instance variable
 		biases.fill(0.1)
-		self.biases = biases
+
+		self.biases = volume(biases)
 
 	# a function to initialize the filter volumes
 	def initialize_filters(self):
@@ -107,20 +115,21 @@ class conv_layer:
 	# a function that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
 		# check to make sure the input is what the layer expects
-		
 		self.check_input_dimensions(input_volume)
+		
+		# make instance input_volume an unmodified version of original input
+		self.input_volume = volume(input_volume.volume_slices)
 
-		# add padding to input volume if specified (@me: consider not doing a variable reassignment - could be expensive computationally)
+		# add padding to input volume if specified
 		input_volume.volume_slices = self.add_padding(input_volume.volume_slices)
-		self.input_volume = input_volume
 
 		# go through all the filters, storing the result of a convolution in an output array
 		output_slice = []
-		for filter_volume, bias in zip(self.filters, self.biases):
+		stride = self.stride
+		for filter_volume, bias in zip(self.filters, self.biases.volume_slices[0][0]):
 			for i in range(self.out_height):
 				# find the current 'y' position of the input image
 				row = i * self.stride
-
 				for j in range(self.out_width):
 					# find the current 'x' position of the input image
 					col = j * self.stride
@@ -128,43 +137,73 @@ class conv_layer:
 					# find the inputs for a single convolution step
 					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
 					output_slice.append(np.sum(depth_column * filter_volume.volume_slices) + bias)
+
 		# return the result of a convolution on the entire volume
-		# 
 		self.output_volume = volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
 		return self.output_volume
 
 	def backward(self):
-		# zero-out the gradients in the input volume
-		# ugly code here - you should really rewrite this when it gets working
-		self.input_volume.zero_gradient()
-		self.input_volume.gradient_slices = self.add_padding(self.input_volume.gradient_slices)
-			
-		for filter_volume, gradient, bias in zip(self.filters, self.output_volume.gradient_slices, self.biases):
-			# zero out the gradient of the filter before continuing
-			filter_volume.zero_gradient()
-			for i in range(self.out_height):
-				# row (x position) of the input
-				row = i * self.stride
-				for j in range(self.out_width):
-					# column (y position) of the input
-					col = j * self.stride
-					# get the gradient of the output at the (x,y) position (chain rule here)
-					chain = gradient[i][j]
+		# START
+		# create a padded matrix with zeros to hold input gradients
+		input_padding = self.padding * 2
+		input_gradient = np.zeros((self.in_depth, self.in_height + input_padding, self.in_width + input_padding))
 
-					# gather inputs within the receptive field's current position along the depth dimension
-					# use these inputs to change the gradients of the filter
-					depth_column = self.input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
-					filter_volume.gradient_slices += depth_column * chain
+		# do the same for the biases
+		biases_gradient = np.zeros((1,1,self.out_depth))
 
-					# similar idea here - grab input gradients and adjust them using the filters (weight matrices)
-					# and he gradient from the previous layer
-					self.input_volume.gradient_slices[:,row:row + self.field_size, col:col + self.field_size] += filter_volume.volume_slices * chain
+		# preserve the original input volume before making changes
+		input_volume = volume(self.input_volume.volume_slices)
+		input_volume.volume_slices = self.add_padding(input_volume.volume_slices)
 
-					# adjust bias
-					bias += chain		
+		# iterate through the entire volume (height, width, depth); first along the depth dimension
+		# this also functions to iterate through each filter individually
+		for depth_index in range(self.out_depth):
+			# iterate along the height dimension
+			# create an empty volume of zeros for the gradient
+			filter_gradient = np.zeros((self.in_depth, self.field_size, self.field_size))
+
+			for height_index in range(self.out_height):
+				# iterate along the width dimension
+				# make sure to find row position in input volume
+				row = height_index * self.stride
+				
+				for width_index in range(self.out_width):
+					# iterate along the height dimension
+					# make sure to find column position in input volume
+					col = width_index * self.stride
+
+					# find the gradient from the previous layer
+					chain_gradient = self.output_volume.gradient_slices[depth_index][height_index][width_index]
+					
+					# update filter gradient by multiplying previous layer's gradient 
+					# with the inputs within the receptive field
+					depth_column = input_volume.volume_slices[:,row:row + self.field_size, col:col + self.field_size]
+					filter_gradient += depth_column * chain_gradient
+					
+					# add the filter weights multiplied by the chain to the input
+					input_gradient[:,row:row + self.field_size, col:col + self.field_size] += self.filters[depth_index].volume_slices * chain_gradient
+
+					# update the biases
+					biases_gradient[0][0][depth_index] += chain_gradient
+
+			# set the new gradients to whatever filter we're currently iterating over
+			self.filters[depth_index].gradient_slices = filter_gradient
+
+		# trim the padding off the gradient volume to match the input volume's original size
+		input_gradient = self.trim_padding(input_gradient)
 		
+		# set the input and bias gradients to whatever gradients we just calculated
+		self.input_volume.gradient_slices = input_gradient
+		self.biases.gradient_slices = biases_gradient
 		return self.input_volume
+
+	def params_grads(self):
+		aggregate = []
+		aggregate.append({"params":self.biases.volume_slices, "grads":self.biases.gradient_slices, "instance":self})
+		for i in range(len(self.filters)):
+			aggregate.append({"params":self.filters[i].volume_slices, "grads":self.filters[i].gradient_slices, "instance":self})
+		return aggregate
 
 	def train(self, rate):
 		for f in self.filters:
-			f.volume_slices += -(f.gradient_slices * 0.01)
+			f.volume_slices += -(f.gradient_slices * rate)
