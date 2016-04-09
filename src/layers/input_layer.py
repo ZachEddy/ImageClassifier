@@ -21,3 +21,12 @@ class input_layer:
 	def forward(self, input_volume):
 		# return input_volume
 		return volume(self.normalize_volume(input_volume.volume_slices))
+
+	def backward(self):
+		return 
+
+	def train(self, rate):
+		return
+
+	def params_grads(self):
+		return [] 
