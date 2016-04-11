@@ -16,9 +16,10 @@ class net_trainer:
 
 		train_amount = 1000
 
-		for i in range(train_amount):
-			print i, "training"
-			self.train(self.image_volumes[i], self.image_labels[i])
+		# for i in range(train_amount):
+		# 	print i, "training"
+		# 	self.train(self.image_volumes[i], self.image_labels[i])
+		# network.save_network()
 		self.test()
 
 	def train(self, image_volume, image_label):
