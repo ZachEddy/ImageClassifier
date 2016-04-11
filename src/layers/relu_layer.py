@@ -21,8 +21,6 @@ class relu_layer:
 		if neuron > 0.0:
 			return neuron
 		return 0.0
-		# the activation function is simply max(0,x). consider making it leaky at some point down the road
-		# return max(0, neuron)
 
 	# a function that feeds the input volume through the network
 	def forward(self, input_volume):
@@ -54,8 +52,18 @@ class relu_layer:
 		self.input_volume.gradient_slices = np.reshape(input_gradient, (self.in_depth, self.in_height, self.in_width))
 		return self.input_volume
 
-	def train(self, rate):
-		return
 
 	def params_grads(self):
 		return []
+
+	def initialize_params(self):
+		return
+
+	def train(self, rate):
+		return
+
+	def save_params(self, net_name):
+		return
+
+	def load_params(self, net_name):
+		return

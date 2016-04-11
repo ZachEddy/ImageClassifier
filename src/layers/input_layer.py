@@ -22,11 +22,18 @@ class input_layer:
 		# return input_volume
 		return volume(self.normalize_volume(input_volume.volume_slices))
 
+	# unimplemented methods to fit the layer API
 	def backward(self):
 		return 
 
-	def train(self, rate):
+	def params_grads(self):
+		return []
+
+	def initialize_params(self):
 		return
 
-	def params_grads(self):
-		return [] 
+	def save_params(self, net_name):
+		return
+
+	def load_params(self, net_name):
+		return

@@ -52,8 +52,17 @@ class softmax_layer:
 		self.loss = -np.log10(self.output_volume.volume_slices[0,0,label])
 		return self.input_volume
 
-	def train(self, rate):
-		return
-
 	def params_grads(self):
 		return []
+
+	def train(self, rate):
+		return
+	
+	def initialize_params(self):
+		return
+
+	def save_params(self, net_name):
+		return
+
+	def load_params(self, net_name):
+		return

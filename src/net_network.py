@@ -1,4 +1,5 @@
 # a class made to manage feeding images to the network
+
 import load_cifar
 import numpy as np
 from src.layers.conv_layer import conv_layer
@@ -9,11 +10,9 @@ from src.layers.fc_layer import fc_layer
 from src.layers.tanh_layer import tanh_layer
 from src.layers.softmax_layer import softmax_layer
 from src.volume import volume
-import time
-
 
 class net_network:
-	def __init__(self, layer_structure):
+	def __init__(self, layer_structure, net_name):
 		# load the cifar-10 images and their corresponding labels
 		cifar_data = load_cifar.images_to_volumes("image_data/data_batch_1")
 		test_data = load_cifar.images_to_volumes("image_data/data_batch_2")
@@ -22,13 +21,36 @@ class net_network:
 
 		test_volumes = test_data[0]
 		test_labels = test_data[1]
-
+		self.net_name = net_name
 		# generate the layers based off of layer definitions from user
 		self.layers = []
-		self.build_layers(layer_structure)
 
+		if layer_structure == None:
+			self.layer_structure = self.load_structure()
+			self.build_layers(self.layer_structure)
+			self.load_params()
+		else:
+			self.layer_structure = layer_structure
+			self.build_layers(self.layer_structure)
+			self.initialize_params()
+
+		
+
+
+
+
+
+
+		# self.load_structure()
+		# self.load_params(
+		# if load_existing:
+		# 	self.load_params()
+		# else:
+			
+		# quit()
+		# self.save_params()
 		# start = time.time()
-
+		
 
 		# self.test(self.image_volumes[0])
 		# quit()
@@ -63,6 +85,11 @@ class net_network:
 		# # END
 		
 		# self.forward(self.image_volumes[0])
+		# 
+	
+
+
+
 
 	# a function that initializes each layer depending on the user specs.
 	# basically a massive if/elif/else block
@@ -86,6 +113,7 @@ class net_network:
 			if layer['type'] == 'conv':
 				# create the new conv layer
 				new_layer = conv_layer(
+					layer['name'],
 					layer['field_size'],
 					layer['filter_count'], 
 					layer['stride'], 
@@ -138,6 +166,7 @@ class net_network:
 			elif layer['type'] == 'fully_connected':
 				# fully connected layer
 				new_layer = fc_layer(
+					layer['name'],
 					previous.out_height,
 					previous.out_width,
 					previous.out_depth,
@@ -147,6 +176,7 @@ class net_network:
 			else:
 				print "Unknown layer: \'%s\'" % (layer['type'])
 				quit()
+		layer_structure.insert(0, image_input)
 		# print self.layers
 
 	def forward(self, image_volume):
@@ -186,10 +216,65 @@ class net_network:
 				aggregate.append(params_grads[param_grad_index])
 		return aggregate
 
+	def initialize_params(self):
+		for layer in self.layers:
+			layer.initialize_params()
+
+	def save_params(self):
+		import os
+		directory = "saved_networks/"+self.net_name
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+		for layer in self.layers:
+			layer.save_params(self.net_name)
+
+	def save_structure(self):
+		layer_file = open("saved_networks/"+self.net_name+"/structure.txt", "w")
+		for layer_spec in self.layer_structure:
+			layer_file.write(str(layer_spec)+"\n")
+		layer_file.close()
+
+	def save_network(self):
+		self.save_structure()
+		self.save_params()
+
+	# a function to load all network weights and biases
+	def load_params(self):
+		for layer in self.layers:
+			layer.load_params(self.net_name)
+
+	# a function to load network layer definitions
+	def load_structure(self):
+		import ast
+		layer_file = open("saved_networks/"+self.net_name+"/structure.txt")
+		layer_structure = []
+		for line in layer_file:
+			layer_dict = ast.literal_eval(line)
+			layer_structure.append(layer_dict)
+		return layer_structure
+
+	# a function that loads the entire network in a single call
+	def load_network(self):
+		self.layer_structure = self.load_structure()
+		self.load_params()
+
 	def classify(self, image_volume):
 		self.forward(image_volume)
 		result = self.layers[len(self.layers)-1].classify
 		return result
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	def test(self, image_volume):

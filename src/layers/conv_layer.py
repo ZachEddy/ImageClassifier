@@ -4,8 +4,10 @@ from src.volume import volume
 from src.net_utilities import is_int
 	
 class conv_layer:
-	# constructor
-	def __init__(self, field_size, filter_count, stride, padding, in_height, in_width, in_depth):
+	def __init__(self, name, field_size, filter_count, stride, padding, in_height, in_width, in_depth):
+		# set name for weight saving/loading purposes
+		self.name = name
+
 		# set class variables
 		self.field_size = field_size
 		self.filter_count = filter_count
@@ -20,12 +22,6 @@ class conv_layer:
 		# calculate output dimensions based on input dimensions
 		self.calc_output_dimensions()
 
-		# initialize filter volumes
-		self.initialize_filters()
-
-		# setup the biases
-		self.initialize_biases()
-
 	# a function to add a padded border around the edges of a volume along the width and height dimensions
 	def add_padding(self, vol):
 		# minimize number of references to instance variable 'self.padding'
@@ -35,13 +31,14 @@ class conv_layer:
 			vol = np.pad(vol, pad_specs, mode='constant',constant_values=0)
 		return vol
 
+	# a function to remove padding border around a volume
 	def trim_padding(self, vol):
 		padding = self.padding
 		if padding > 0:
 			new_vol = vol[:,padding:len(vol[0])-padding,padding:len(vol[0][0])-padding]
 			return new_vol
 		return vol
-
+	
 	# a function to calculate output volume height based on input volume height
 	def calc_output_height(self):
 		return (self.in_height - self.field_size + 2.0 * self.padding) / self.stride + 1.0
@@ -85,7 +82,6 @@ class conv_layer:
 
 		# fill the matrix with 0.1 (initial bias value) and make it an instance variable
 		biases.fill(0.1)
-
 		self.biases = volume(biases)
 
 	# a function to initialize the filter volumes
@@ -111,6 +107,27 @@ class conv_layer:
 			
 		# assign as an instance variable
 		self.filters = filters
+
+	# a function to initialize the network biases
+	def initialize_params(self):
+		self.initialize_biases()
+		self.initialize_filters()
+
+	# a function to save weights and biases
+	def save_params(self,net_name):
+		filter_params = []
+		for filter_volume in self.filters:
+			filter_params.append(filter_volume.volume_slices)
+		np.savez("saved_networks/"+net_name+"/"+self.name, biases = self.biases.volume_slices, filters = filter_params)
+
+	# a function to load existing weights from a file
+	def load_params(self, net_name):
+		params = np.load("saved_networks/"+net_name+"/"+self.name + ".npz")
+		filters = []
+		for filter_values in params["filters"]:
+			filters.append(volume(filter_values))
+		self.filters = filters
+		self.biases = volume(params["biases"])
 
 	# a function that runs the convolution process on a given input volume from the previous layer
 	def forward(self, input_volume):
@@ -142,8 +159,8 @@ class conv_layer:
 		self.output_volume = volume(np.reshape(output_slice, (self.out_depth, self.out_height, self.out_width)))
 		return self.output_volume
 
+	# backpropagation for convolution layer
 	def backward(self):
-		# START
 		# create a padded matrix with zeros to hold input gradients
 		input_padding = self.padding * 2
 		input_gradient = np.zeros((self.in_depth, self.in_height + input_padding, self.in_width + input_padding))
@@ -197,6 +214,7 @@ class conv_layer:
 		self.biases.gradient_slices = biases_gradient
 		return self.input_volume
 
+	# a function to return params (weights and biases) and their gradients for training
 	def params_grads(self):
 		aggregate = []
 		aggregate.append({"params":self.biases.volume_slices, "grads":self.biases.gradient_slices, "instance":self})

@@ -73,10 +73,9 @@ class pool_layer:
 
 		return self.output_volume
 
+	# backpropagation for max pooling layer
 	def backward(self):
-		# zero-out existing gradients
-		# self.input_volume.zero_gradient()
-
+		
 		input_gradient = np.zeros((self.in_depth, self.in_height, self.in_width))
 
 		# go through each slice of the input and output
@@ -92,9 +91,15 @@ class pool_layer:
 
 		self.input_volume.gradient_slices = input_gradient
 		return self.input_volume
-
-	def train(self, rate):
-		return
-
+	
 	def params_grads(self):
 		return []
+
+	def initialize_params(self):
+		return
+
+	def save_params(self, net_name):
+		return
+
+	def load_params(self, net_name):
+		return
