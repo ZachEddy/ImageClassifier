@@ -221,10 +221,6 @@ class net_network:
 			layer.initialize_params()
 
 	def save_params(self):
-		import os
-		directory = "saved_networks/"+self.net_name
-		if not os.path.exists(directory):
-			os.makedirs(directory)
 		for layer in self.layers:
 			layer.save_params(self.net_name)
 
@@ -235,6 +231,10 @@ class net_network:
 		layer_file.close()
 
 	def save_network(self):
+		import os
+		directory = "saved_networks/"+self.net_name
+		if not os.path.exists(directory):
+			os.makedirs(directory)
 		self.save_structure()
 		self.save_params()
 
