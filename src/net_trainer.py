@@ -6,107 +6,71 @@ class net_trainer:
 	def __init__(self, network, learning_rate):
 		self.network = network
 		self.learning_rate = learning_rate
-		cifar_data = load_cifar.images_to_volumes("image_data/data_batch_1")
-		cifar_test = load_cifar.images_to_volumes("image_data/data_batch_2")
+		
+		# some constants to add as params into the initialize method later
+		self.rho_decay = 0.95
+		self.epsilon = 0.000001
+		self.weight_decay = 0.0001
 
-		self.image_volumes = cifar_data[0]
-		self.image_labels = cifar_data[1]
-
-		self.test_volumes = cifar_test[0]
-		self.test_labels = cifar_test[1]
-
+		# accumulators for the gradient and parameters (used in adadelta)
 		self.grad_accumated = []
 		self.update_accumated = []
 
-		self.rho_decay = 0.95
-		self.epsilon = 0.000001
+		# import all the batches
+		batch_one = load_cifar.images_to_volumes("image_data/data_batch_1")
+		batch_two = load_cifar.images_to_volumes("image_data/data_batch_2")
+		batch_three = load_cifar.images_to_volumes("image_data/data_batch_3")
+		batch_four = load_cifar.images_to_volumes("image_data/data_batch_4")
+		batch_test = load_cifar.images_to_volumes("image_data/data_batch_5")
 
-		self.weight_decay = 0.0001
+    # define all the volumes and their labels
+		self.vol_one = batch_one[0]
+		self.lab_one = batch_one[1]
 
-		train_amount = 1000
+		self.vol_two = batch_two[0]
+		self.lab_two = batch_two[1]
 
+		self.vol_three = batch_three[0]
+		self.lab_three = batch_three[1]
 
+		self.vol_four = batch_four[0]
+		self.lab_four = batch_four[1]
 
+		self.vol_test = batch_test[0]
+		self.lab_test = batch_test[1]
+
+		# define an amount to train with
+		train_amount = 2000
+
+		# training over every batch
 		self.train_counter = 1
 		for i in range(train_amount):
-			print i, "training"
-			self.train(self.image_volumes[i], self.image_labels[i])
+			print i, "training", 1
+			self.train_adadelta(self.vol_one[i], self.lab_one[i])
+
+		# for i in range(train_amount):
+		# 	print i, "training", 2
+		# 	self.train(self.vol_two[i], self.lab_two[i])
+
+		# for i in range(train_amount):
+		# 	print i, "training", 3
+		# 	self.train(self.vol_three[i], self.lab_three[i])
+
+		# for i in range(train_amount):
+		# 	print i, "training", 4
+		# 	self.train(self.vol_four[i], self.lab_four[i])
+
 		network.save_network()
 		self.test()
 
-	def train(self, image_volume, image_label):
+	# a function to train using Matt Zeiler's adadelta method - better than standard SGD
+	def train_adadelta(self, image_volume, image_label):
 		self.network.forward(image_volume)
-		# loss = self.network.backward(image_label)
-		params_grads = self.network.params_grads()
-		# print params_grads[1]["grads"]
 		self.network.backward(image_label)
+		# do batch stuff here if you want
+		self.update_params()
 
-		params_grads = self.network.params_grads()
-
-		# print params_grads[2]["grads"]
-
-
-
-
-		if self.train_counter % 2 == 0:
-			self.update_params()
-		self.train_counter += 1
-
-
-
-
-		# self.network.forward(image_volume)
-		# loss = self.network.backward(image_label)
-		# params_grads = self.network.params_grads()
-
-		# if len(self.grad_accumated == 0):
-		# 	# set the gradient accumations
-		# 	for param_grad in params_grads:
-		# 		self.grad_accumated.append(np.zeros(param_grad.shape))
-		# 		self.update_accumated.append(np.zeros(param_grad.shape))
-
-
-
-
-
-
-
-
-
-
-
-
-
-		# for param_grad in params_grads:
-
-
-
-		# 	param = param_grad["params"]
-		# 	grad = param_grad["grads"]
-			
-		# 	# print "Type, ", param_grad["instance"]
-		# 	# input_vol = param_grad["instance"].input_volume.volume_slices
-		# 	# print "Input (", str(len(input_vol)), str(len(input_vol[0])), str(len(input_vol[0][0])) + " )"
-		# 	# print param_grad["instance"].input_volume.volume_slices
-
-		# 	# print "Output"
-		# 	# print param_grad["instance"].output_volume.volume_slices, "\n"
-
-		# 	# print "Biases"
-		# 	# print param_grad["instance"].biases.volume_slices, "\n"
-
-		# 	# print "Parameter"
-		# 	# print param, "\n"
-		# 	# print "Gradient"
-		# 	# print grad, "\n"
-		# 	param += -(self.learning_rate * grad)
-
-		# 	# print "Update"
-		# 	# print param, "\n"
-		# 	# raw_input("Press Enter to continue...")
-		# 	# print param, "after"
-		# 	# quit()
-
+	# a helper method for the adadelta training method
 	def update_params(self):
 		# grad parameters and their gradients
 		params_grads = self.network.params_grads()
@@ -140,13 +104,32 @@ class net_trainer:
 			param += update
 			params_grads[i]["grads"].fill(0.0)
 
+	# a function to train with SGD alone
+	def train_sgd(self, image_volume, image_label):
+		# forward and backward propagate the network
+		self.network.forward(image_volume)
+		loss = self.network.backward(image_label)
+
+		# get the parameters and gradients for everything in the network
+		params_grads = self.network.params_grads()
+
+		# go through every layer in the network that has parameters
+		for i in range(len(params_grads)):
+			# get parameters and gradients at each layer in the network
+			param = params_grads[i]["params"]
+			grad = params_grads[i]["grads"]
+			grad += self.weight_decay * param
+			# update the parameters by the gradient, then reset the gradient to zero
+			param -= self.learning_rate * grad
+			params_grads[i]["grads"].fill(0.0)
+
 	def test(self):
 		correct = 0
 		test_amount = 1000
 		for i in range(test_amount):
 			print i, "testing"
-			result = self.network.classify(self.test_volumes[i])
-			print result, self.test_labels[i]
-			if result == self.test_labels[i]:
+			result = self.network.classify(self.vol_test[i])
+			print result, self.lab_test[i]
+			if result == self.lab_test[i]:
 				correct += 1
 		print correct / (test_amount * 1.0)*100, "accuracy"
