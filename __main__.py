@@ -5,4 +5,14 @@ from src.net_trainer import net_trainer
 
 net = net_initialize.build()
 
-net_trainer(net, learning_rate = 0.001)
+
+trainer = net_trainer(net, learning_rate = 0.001)	
+
+if net.pretrained:
+	trainer.test(10)
+else:
+	trainer.train(2)
+	net.save_network()
+	print "~~ Networked saved as '%s'" % (net.net_name)
+	print
+	trainer.test(10)
