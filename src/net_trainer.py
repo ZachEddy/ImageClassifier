@@ -6,10 +6,6 @@ class net_trainer:
 	def __init__(self, network, learning_rate):
 		self.network = network
 		self.learning_rate = learning_rate
-		
-		# some constants to add as params into the initialize method later
-		self.rho_decay = 0.95
-		self.epsilon = 0.000001
 		self.weight_decay = 0.0001
 
 		# accumulators for the gradient and parameters (used in adadelta)
@@ -39,70 +35,28 @@ class net_trainer:
 		self.vol_test = batch_test[0]
 		self.lab_test = batch_test[1]
 
-		# define an amount to train with
-		train_amount = 2000
-
-		# training over every batch
-		self.train_counter = 1
+	# a function to run through the testing sets and train the network
+	def train(self, train_amount):
+		print "~~ Training network with", train_amount, "images from 4 training sets (", (train_amount * 4), "total )"
+		raw_input("~~ Press enter to continue...")
+		print
 		for i in range(train_amount):
-			print i, "training", 1
-			self.train_adadelta(self.vol_one[i], self.lab_one[i])
+			print "~~~~ Training set 1 - progress:",i+1, "/", train_amount
+			self.train_sgd(self.vol_one[i], self.lab_one[i])
 
-		# for i in range(train_amount):
-		# 	print i, "training", 2
-		# 	self.train(self.vol_two[i], self.lab_two[i])
+		for i in range(train_amount):
+			print "~~~~ Training set 2 - progress:",i+1, "/", train_amount
+			self.train_sgd(self.vol_two[i], self.lab_two[i])
 
-		# for i in range(train_amount):
-		# 	print i, "training", 3
-		# 	self.train(self.vol_three[i], self.lab_three[i])
+		for i in range(train_amount):
+			print "~~~~ Training set 3 - progress:",i+1, "/", train_amount
+			self.train_sgd(self.vol_three[i], self.lab_three[i])
 
-		# for i in range(train_amount):
-		# 	print i, "training", 4
-		# 	self.train(self.vol_four[i], self.lab_four[i])
+		for i in range(train_amount):
+			print "~~~~ Training set 4 - progress:",i+1, "/", train_amount
+			self.train_sgd(self.vol_four[i], self.lab_four[i])
+		print
 
-		network.save_network()
-		self.test()
-
-	# a function to train using Matt Zeiler's adadelta method - better than standard SGD
-	def train_adadelta(self, image_volume, image_label):
-		self.network.forward(image_volume)
-		self.network.backward(image_label)
-		# do batch stuff here if you want
-		self.update_params()
-
-	# a helper method for the adadelta training method
-	def update_params(self):
-		# grad parameters and their gradients
-		params_grads = self.network.params_grads()
-
-		# make sure gradient accumulators are initialized
-		if len(self.grad_accumated) == 0:
-			for param_grad in params_grads:
-				param = param_grad["params"]
-				self.grad_accumated.append(np.zeros(param.shape))
-				self.update_accumated.append(np.zeros(param.shape))
-
-		for i in range(len(params_grads)):
-			# get params and their corresponding gradients
-			param = params_grads[i]["params"]
-			grad = params_grads[i]["grads"] * (self.learning_rate)
-			# get existing accumulators for the specific params and gradients
-			grad_acc = self.grad_accumated[i]
-			update_acc = self.update_accumated[i]
-
-
-			grad += self.weight_decay * param
-			# update gradient accumulator
-			grad_acc = grad_acc * self.rho_decay + ((1-self.rho_decay) * (grad * grad))
-			# determine update for the parameter
-			update = (np.sqrt((update_acc + self.epsilon)/(grad_acc + self.epsilon)) * grad) * -1
-			# update the param accumulator
-			update_acc = update_acc * self.rho_decay + ((1 - self.rho_decay) * (update * update))
-			self.update_accumated[i] = update_acc
-			self.grad_accumated[i] = grad_acc
-			
-			param += update
-			params_grads[i]["grads"].fill(0.0)
 
 	# a function to train with SGD alone
 	def train_sgd(self, image_volume, image_label):
@@ -123,13 +77,19 @@ class net_trainer:
 			param -= self.learning_rate * grad
 			params_grads[i]["grads"].fill(0.0)
 
-	def test(self):
+	# a method to test the accuracy of the network
+	def test(self, test_amount):
+		print "~~ Testing accuracy with", test_amount, "images from testing set..."
+		raw_input("~~ Press enter to continue...")
+		print
+
+		# keep track of how many the network got correct
 		correct = 0
-		test_amount = 1000
 		for i in range(test_amount):
-			print i, "testing"
+			# iterate through the testing set
+			print "~~~~ Testing progress...", i+1, "/", test_amount
 			result = self.network.classify(self.vol_test[i])
-			print result, self.lab_test[i]
 			if result == self.lab_test[i]:
 				correct += 1
-		print correct / (test_amount * 1.0)*100, "accuracy"
+		print
+		print "~~ Testing result:", correct / (test_amount * 1.0)*100, "percent accuracy"
