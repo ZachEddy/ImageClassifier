@@ -57,7 +57,7 @@ class fc_layer:
 			weights.append(volume(weight_values))
 		self.weights = weights
 		self.biases = volume(params["biases"])
-	
+
 	# a function that feeds an input volume through the network
 	def forward(self, input_volume):
 		self.input_volume = input_volume
@@ -92,9 +92,11 @@ class fc_layer:
 			# calculate the weight gradient
 			weight_gradient = self.input_volume.volume_slices * chain_gradient
 
-			self.weights[neuron_count].gradient_slices = weight_gradient
+			# changed to +=
+			self.weights[neuron_count].gradient_slices += weight_gradient
 
-		self.biases.gradient_slices = self.output_volume.gradient_slices
+		# changed to +=
+		self.biases.gradient_slices += self.output_volume.gradient_slices
 		self.input_volume.gradient_slices = input_gradient
 
 		return self.input_volume
@@ -106,7 +108,3 @@ class fc_layer:
 		for i in range(len(self.weights)):
 			aggregate.append({"params":self.weights[i].volume_slices, "grads":self.weights[i].gradient_slices, "instance":self})
 		return aggregate
-
-	def train(self, rate):
-		for w in self.weights:
-			w.volume_slices += -(w.gradient_slices * rate)

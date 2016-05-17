@@ -15,7 +15,7 @@ class pool_layer:
 	# a function to make sure the inputs will produce a valid output
 	def check_user_definition(self):
 		if not(is_int(self.out_height)) or not(is_int(self.out_width)):
-			print "Input dimensions into pool layer aren't valid"
+			print "~~ Input dimensions into pool layer aren't valid"
 			quit()
 
 	# a function to calculate the output dimensions of a volume after pooling has been done
@@ -92,6 +92,8 @@ class pool_layer:
 		self.input_volume.gradient_slices = input_gradient
 		return self.input_volume
 	
+	# unimplemented layer methods
+
 	def params_grads(self):
 		return []
 

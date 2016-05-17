@@ -52,6 +52,7 @@ class relu_layer:
 		self.input_volume.gradient_slices = np.reshape(input_gradient, (self.in_depth, self.in_height, self.in_width))
 		return self.input_volume
 
+	# unimplemented layer methods
 
 	def params_grads(self):
 		return []

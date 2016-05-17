@@ -52,13 +52,13 @@ class conv_layer:
 		# quit the program if any of the dimensions aren't integers
 		# print self.out_height, self.out_width, self.out_depth
 		if not(is_int(self.out_height)) or (not is_int(self.out_width)) or (not is_int(self.out_depth)):
-			print "Input dimensions into conv layer aren't valid"
+			print "~~ Input dimensions into conv layer aren't valid"
 			quit()
 
 	# a function to make sure that inputs into the conv layer match with what it expects
 	def check_input_dimensions(self, input_volume):
 		if (input_volume.height != self.in_height) or (input_volume.width != self.in_width) or (input_volume.depth != self.in_depth):
-			print "Dimensions of input volume do not match expected dimensions"
+			print "~~ Dimensions of input volume do not match expected dimensions"
 			quit()
 
 	# a function to calculate the dimensions of the output volume
@@ -204,14 +204,16 @@ class conv_layer:
 					biases_gradient[0][0][depth_index] += chain_gradient
 
 			# set the new gradients to whatever filter we're currently iterating over
-			self.filters[depth_index].gradient_slices = filter_gradient
+			# chnaged to +=
+			self.filters[depth_index].gradient_slices += filter_gradient
 
 		# trim the padding off the gradient volume to match the input volume's original size
 		input_gradient = self.trim_padding(input_gradient)
 		
 		# set the input and bias gradients to whatever gradients we just calculated
 		self.input_volume.gradient_slices = input_gradient
-		self.biases.gradient_slices = biases_gradient
+		# changed to += 
+		self.biases.gradient_slices += biases_gradient
 		return self.input_volume
 
 	# a function to return params (weights and biases) and their gradients for training
@@ -221,7 +223,3 @@ class conv_layer:
 		for i in range(len(self.filters)):
 			aggregate.append({"params":self.filters[i].volume_slices, "grads":self.filters[i].gradient_slices, "instance":self})
 		return aggregate
-
-	def train(self, rate):
-		for f in self.filters:
-			f.volume_slices += -(f.gradient_slices * rate)
