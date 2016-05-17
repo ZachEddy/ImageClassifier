@@ -60,9 +60,6 @@ class relu_layer:
 	def initialize_params(self):
 		return
 
-	def train(self, rate):
-		return
-
 	def save_params(self, net_name):
 		return
 
