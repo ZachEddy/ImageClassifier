@@ -1,0 +1,14 @@
+{'out_height': 32, 'out_width': 32, 'out_depth': 3, 'type': 'input'}
+{'field_size': 5, 'name': 'conv_one', 'filter_count': 10, 'padding': 2, 'stride': 1, 'type': 'conv'}
+{'type': 'relu'}
+{'field_size': 2, 'type': 'pool'}
+{'field_size': 5, 'name': 'conv_two', 'filter_count': 10, 'padding': 2, 'stride': 1, 'type': 'conv'}
+{'type': 'relu'}
+{'field_size': 2, 'type': 'pool'}
+{'field_size': 5, 'name': 'conv_three', 'filter_count': 10, 'padding': 2, 'stride': 1, 'type': 'conv'}
+{'type': 'relu'}
+{'field_size': 2, 'type': 'pool'}
+{'neuron_count': 100, 'type': 'fully_connected', 'name': 'fc_one'}
+{'type': 'relu'}
+{'neuron_count': 10, 'type': 'fully_connected', 'name': 'fc_two'}
+{'type': 'softmax'}
