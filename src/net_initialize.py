@@ -40,4 +40,4 @@ def build():
 	# 'sgd_one' is the name of the trained network that I used for the demo (50.4% accuracy on
 	# 1000 images from the testing set)
 	
-	return net_network(layer_structure,"sgd_one")
+	return net_network(None,"sgd_one")
