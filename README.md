@@ -1,5 +1,5 @@
 <h1>ZachNet</h1>
-A Convolutional Neural Network implemented in Python to classify the following:
+A Convolutional Neural Network implemented in Python to classify images in the following categories:
   - Airplanes
   - Automobiles
   - Birds
@@ -33,12 +33,13 @@ Feel free to run `python __main__.py` at the top-level directory to get things g
 
 <h4>Create your own network</h4>
 
-I made it really easy to train, save, and load your own network. Inside `net_initialize.py`, you can create networks with different layer patterns. For example, you can change the number of filters in a convolution layer with the following:
+I made it easy to train, save, and load your own network. Inside `net_initialize.py`, you can create networks with different layer patterns. Each layer has a few user-defined parameters. For example, you can change the number of filters in a convolution layer with the following:
 
 `{'type':'conv', 'field_size':5, 'filter_count':10, 'stride':1, 'padding':2, 'name':"conv_one"}`
+
 `{'type':'conv', 'field_size':5, 'filter_count':15, 'stride':1, 'padding':2, 'name':"conv_one"}`
 
-Changing the layer pattern will impact:
+Changing the layer pattern and/or their associated layer parameters will impact:
 
 1. **network accuracy** - how consistently the network classifies correctly.
 2. **training time** - how long it takes the network to learn.
@@ -59,7 +60,7 @@ In this case, `None` informs the network that no layer structure has been provid
 
 <hr>
 
-This isn't the most comprehensive explanation. Take a look at the `net_initialize.py` code; I think this will make it much more conceptually concrete.
+Take a look at the `net_initialize.py` code; I think this will make it much more conceptually concrete. Also, having a basic understanding of Convolutional Neural Networks will really help. I recommend [this detailed explanation](http://cs231n.github.io/convolutional-networks/) from a Stanford course on ConvNets.
 
 
 
@@ -67,7 +68,7 @@ This isn't the most comprehensive explanation. Take a look at the `net_initializ
 
 
 
-<h4> Reference </h4>
+<h2> Reference </h2>
 <ul>
   <li>
    <a href="https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a>, Alex Krizhevsky, 2009.
