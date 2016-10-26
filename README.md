@@ -1,5 +1,5 @@
 <h1>ZachNet</h1>
-A Convolutional Neural Network implemented in Python to classify images in the following categories:
+A Convolutional Neural Network implemented in Python to classify images in the following ten categories:
   - Airplanes
   - Automobiles
   - Birds
@@ -11,33 +11,36 @@ A Convolutional Neural Network implemented in Python to classify images in the f
   - Ships
   - Trucks
 
-<h2>Prerequisites</h2>
-**Numpy** - a powerful math library written in Python. If you haven't already installed it, running this command *should* bring your machine up to speed:
+<h2>Background</h2>
+Neural networks are input/output blackboxes. They take input(s), perform computation in sequential layers, then generate output(s). For example, a network could determine an athlete's sport given height, weight, and favorite Gatorade flavor. It may find that most heavy-set tall people play football, and most lightweight tall people run long-distance. Gatorade flavor presumably won't influence classification. For instance, it seems unlikely that most football players prefer grape, while runners prefer strawberry. Physical attributes offer better insight in this context, not matters of personal preference &mdash; this is something a neural network can <i>learn</i>. However, the network has to undergo training before it can make classifications accurately. This process involves individually inputting hundreds, thousands, or potentially millions of examples with known outcomes. Each time the network classifies incorrectly, it will adjust slightly with the goal of improving accuracy.
 
-`pip install numpy`
+Convolutional networks are similar, but function specifically for three-dimensional inputs. Images are two-dimensional along height and width. They form a third, depth-wise dimension with RGB color channels. This particular network can examine images, find recurrent patterns, then classify based on what it learned. For example, after looking at hundreds of horses, it will eventually discover the common features &mdash; ears, noses, hoofs, etc.
 
-More information about installing numpy available [here](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html).
+<h2>Dependencies</h2>
+**NumPy** - a math library written in Python. You can install it via command-line if necessary:
+
+    $ pip install numpy
+
+More information about setting up NumPy [here](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html).
 
 <h2>Installing</h2>
-Just clone this repository, and you're set to go! **Quick note**: this includes the entire CIFAR-10, a compressed dataset of 50,000 32x32 pixel images. If the cloning process takes a few minutes, that's why. 
+Clone the repository and you're set.
 
+    $ git clone https://github.com/ZachEddy/ImageClassifier
 
-`git clone https://github.com/ZachEddy/ImageClassifier`
+**Note**: this includes the CIFAR-10, a compressed set of 50,000 32x32 images. The cloning could take 3-5 minutes.
 
-<h2>Running the code</h2>
-<h4>Quickstart </h4>
+<h2>Running</h2>
+<h4>Quickstart</h4>
 
-
-
-Feel free to run `python __main__.py` at the top-level directory to get things going. I have the network defaulted to load a pretrained network and run on ten testing images.
+Run `python __main__.py` at the top-level directory. I have the network defaulted to load a pre-trained network and classify ten images from a testing set. The default network trained overnight with 40,000 total images.
 
 <h4>Create your own network</h4>
 
-I made it easy to train, save, and load your own network. Inside `net_initialize.py`, you can create networks with different layer patterns. Each layer has a few user-defined parameters. For example, you can change the number of filters in a convolution layer with the following:
+You can easily train, save, and load your own network. Inside `net_initialize.py`, you can create networks with different layer patterns. Each layer has a few user-defined parameters. For example, you can change the number of filters in a convolution layer with the following:
 
-`{'type':'conv', 'field_size':5, 'filter_count':10, 'stride':1, 'padding':2, 'name':"conv_one"}`
-
-`{'type':'conv', 'field_size':5, 'filter_count':15, 'stride':1, 'padding':2, 'name':"conv_one"}`
+    {'type':'conv', 'field_size':5, 'filter_count':10, 'stride':1, 'padding':2, 'name':"conv_one"}
+    {'type':'conv', 'field_size':5, 'filter_count':15, 'stride':1, 'padding':2, 'name':"conv_one"}
 
 Changing the layer pattern and/or their associated layer parameters will impact:
 
@@ -46,17 +49,17 @@ Changing the layer pattern and/or their associated layer parameters will impact:
 
 Lastly, this line of code inside `net_initialize` creates a new network based on the *layer structure* provided by the user:
 
-`return net_network(layer_structure,"network_name")`
+    return net_network(layer_structure,"network_name")
 
 After training completes, the weights, biases, and layer structure get saved as `network_name` in the `saved_networks` directory.
 
 <h4>Load a network</h4>
 
-Alternatively, you can load a network to classify something *after* the training process finishes. 
+Alternatively, you can load a network to classify something *after* the training process finishes.
 
-`return net_network(None,"pretrained_network_name")`
+    return net_network(None,"pretrained_network_name")
 
-In this case, `None` informs the network that no layer structure has been provided by the user. It will search for `pretrained_network` inside the `saved_networks` directory instead. 
+`None` informs the network that no layer structure has been provided by the user. It will search for `pretrained_network` inside the `saved_networks` directory instead.
 
 <hr>
 
