@@ -30,7 +30,7 @@ Clone the repository and you're set.
 
     $ git clone https://github.com/ZachEddy/ImageClassifier
 
-**Note**: this includes the CIFAR-10, a compressed set of 50,000 32x32 images. The cloning could take 3-5 minutes.
+**Note**: this includes the [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html), a compressed set of 50,000 32x32 images. The cloning could take 3-5 minutes.
 
 <h2>Running</h2>
 <h4>Quickstart</h4>
